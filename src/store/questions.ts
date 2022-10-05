@@ -1,14 +1,6 @@
-import { atomWithStorage } from "jotai/utils";
+import { atom } from "jotai";
 import { Question } from "../models/questions.model";
 
-export type StoredQuestions = Question & { answered: boolean };
+export const questionsAtom = atom<Question[]>([]);
 
-export const questionsAtom = atomWithStorage<StoredQuestions[]>(
-  "questions",
-  []
-);
-
-export const currentQuestionAtom = atomWithStorage<number>(
-  "currentQuestion",
-  0
-);
+export const currentQuestionAtom = atom<number>(0);

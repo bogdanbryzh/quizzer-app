@@ -1,29 +1,29 @@
 import { useAtom } from "jotai";
 import { stageAtom } from "../store/stage";
-import { teamIdAtom } from "../store/team";
+import { teamAtom, teamIsFinishedAlready } from "../store/team";
 
 function Intro() {
   const [, setStage] = useAtom(stageAtom);
-  const [teamId] = useAtom(teamIdAtom);
+  const [, setTeamAlreadyFinished] = useAtom(teamIsFinishedAlready);
+  const [team] = useAtom(teamAtom);
 
   return (
-    <>
-      <h1 className="text-5xl font-bold">Hello there</h1>
-      <p className="py-6">
-        Lorem, ipsum dolor sit amet consectetur adipisicing elit. Officia quos
-        ipsam eos vitae assumenda nulla adipisci voluptatum, repellendus ducimus
-        ipsum!
-      </p>
+    <div className="flex flex-col items-center">
+      <h1 className="text-6xl font-bold">Point name</h1>
+      <p className="py-6">Some text with rules, maybe</p>
       <button
         className="btn btn-primary"
         onClick={() => {
-          if (teamId) setStage("quiz");
-          else setStage("picker");
+          if (team?.id) {
+            setStage("quiz");
+
+            setTeamAlreadyFinished(team?.finished ?? false);
+          } else setStage("picker");
         }}
       >
         Почати
       </button>
-    </>
+    </div>
   );
 }
 

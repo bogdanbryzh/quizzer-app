@@ -4,4 +4,4 @@ import { Team } from "../models/teams.model";
 
 export const teamAtom = atomWithStorage<Team | null>("team", null);
 
-export const teamIdAtom = atom((get) => get(teamAtom)?.id ?? null);
+export const teamIsFinishedAlready = atom<boolean>(false);

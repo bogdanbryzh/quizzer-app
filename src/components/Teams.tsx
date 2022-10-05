@@ -3,12 +3,15 @@ import {
   CheckIcon,
   XMarkIcon,
 } from "@heroicons/react/20/solid";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useAtom } from "jotai";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { getTeams, Team, verifyTeam } from "../models/teams.model";
 import { stageAtom } from "../store/stage";
-import { teamAtom } from "../store/team";
+import { teamAtom, teamIsFinishedAlready } from "../store/team";
+import Loading from "./Loading";
 
 function Teams() {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -16,6 +19,7 @@ function Teams() {
   const [isTeamVerified, setIsTeamVerified] = useState<boolean>(false);
   const [, setStage] = useAtom(stageAtom);
   const [, setTeam] = useAtom(teamAtom);
+  const [, setTeamAlreadyFinished] = useAtom(teamIsFinishedAlready);
 
   useEffect(() => {
     getTeams().then(({ data }) => {
@@ -23,25 +27,43 @@ function Teams() {
     });
   });
 
+  const TeamPinSchema = z.object({
+    pin: z.string().min(4, {
+      message: "Введіть пін повністю (якщо є нулі спереду, то їх також)",
+    }),
+  });
+
+  type TeamPinData = z.infer<typeof TeamPinSchema>;
+
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<{ pin: string }>({ defaultValues: { pin: "" } });
+    setError,
+  } = useForm<TeamPinData>({
+    resolver: zodResolver(TeamPinSchema),
+  });
 
   const teamVerificationHandler = handleSubmit(({ pin }) => {
-    if (selectedTeam?.finished) {
-      setStage("outro");
+    if (verifyTeam(selectedTeam!, pin)) {
       setTeam(selectedTeam);
-    }
 
-    if (verifyTeam(selectedTeam!, pin) && !selectedTeam?.finished) {
       setIsTeamVerified(true);
 
-      setTeam(selectedTeam);
-
-      setTimeout(() => setStage("quiz"), 400);
+      setTimeout(() => {
+        if (selectedTeam?.finished) {
+          setTeamAlreadyFinished(true);
+          setStage("outro");
+        } else {
+          setStage("quiz");
+        }
+      }, 500);
+    } else {
+      setError("pin", {
+        message:
+          "Пін код введено неправильно. Якщо ви вважаєте, що ввели правильний пін код - зв'яжіться з адміністраторами",
+      });
     }
   });
 
@@ -49,6 +71,7 @@ function Teams() {
     <div>
       {teams.length ? (
         <div className="overflow-y-auto">
+          <h2 className="text-6xl font-bold py-6">Виберіть вашу команду:</h2>
           <table className="table w-full">
             <tbody>
               {teams.map((team) => (
@@ -81,14 +104,18 @@ function Teams() {
               >
                 <XMarkIcon width={20} />
               </label>
-              <h3 className="font-bold text-lg">{selectedTeam?.name}</h3>
+              <h3 className="font-bold text-2xl">{selectedTeam?.name}</h3>
               <p>Введіть пін-код вашої команди</p>
 
               <form
-                className="form-control mt-6"
+                className="form-control mt-2"
                 onSubmit={teamVerificationHandler}
               >
-                {errors.pin ? <span>{errors.pin.message}</span> : null}
+                {errors.pin ? (
+                  <span className="py-2 italic text-sm">
+                    {errors.pin.message}
+                  </span>
+                ) : null}
                 <div className="input-group">
                   <input
                     type="text"
@@ -111,7 +138,7 @@ function Teams() {
           </div>
         </div>
       ) : (
-        "loading"
+        <Loading />
       )}
     </div>
   );

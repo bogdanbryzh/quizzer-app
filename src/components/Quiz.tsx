@@ -1,28 +1,35 @@
-import { Question } from "../models/questions.model";
 import { ChevronRightIcon } from "@heroicons/react/20/solid";
-import { useForm } from "react-hook-form";
-import { createAnswer } from "../models/answers.model";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useAtom } from "jotai";
-import { teamIdAtom } from "../store/team";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { createAnswer } from "../models/answers.model";
+import { getQuestions } from "../models/questions.model";
+import { teamAtom } from "../store/team";
 import { currentQuestionAtom, questionsAtom } from "../store/questions";
 import { stageAtom } from "../store/stage";
 import { markTeamFinished } from "../models/teams.model";
-
-const markQuestionAnswered = (
-  questions: (Question & { answered: boolean })[],
-  question: Question & { answered: boolean }
-) => {
-  return questions.map((q) => ({
-    ...q,
-    answered: q.id === question.id ? true : q.answered,
-  }));
-};
+import { useEffect } from "react";
+import Loading from "./Loading";
 
 function Quiz() {
   const [questions, setQuestions] = useAtom(questionsAtom);
   const [, setStage] = useAtom(stageAtom);
-  const [teamId] = useAtom(teamIdAtom);
+  const [team] = useAtom(teamAtom);
   const [currentQuestion, setCurrentQuestion] = useAtom(currentQuestionAtom);
+
+  useEffect(() => {
+    getQuestions(team!.id).then(({ data }) => {
+      if (!data || !data.length) return setStage("outro");
+      setQuestions(data);
+    });
+  }, []);
+
+  const FormSchema = z.object({
+    answer: z.string().min(1, { message: "Рекомендую спробувати, все таки" }),
+  });
+
+  type FormData = z.infer<typeof FormSchema>;
 
   const {
     formState: { errors },
@@ -30,21 +37,20 @@ function Quiz() {
     register,
     reset,
     setFocus,
-  } = useForm<{ answer: string }>();
+  } = useForm<FormData>({
+    resolver: zodResolver(FormSchema),
+  });
 
   const handleQuestionAnser = handleSubmit(({ answer }) => {
     createAnswer({
       question_id: questions[currentQuestion].id,
-      team_id: teamId!,
+      team_id: team!.id,
       text: answer,
     })
       .then(() => {
-        setQuestions(
-          markQuestionAnswered(questions, questions[currentQuestion])
-        );
         if (questions.length === currentQuestion + 1) {
           setStage("outro");
-          markTeamFinished(teamId!);
+          markTeamFinished(team!.id);
           return;
         }
         setCurrentQuestion((current) => current + 1);
@@ -60,7 +66,7 @@ function Quiz() {
     <div>
       {questions.length ? (
         <>
-          <h1 className="text-xl font-bold p-2">
+          <h1 className="text-4xl font-bold p-2">
             {questions[currentQuestion].text}
           </h1>
           <form
@@ -73,8 +79,11 @@ function Quiz() {
               className={`input input-bordered w-full ${
                 errors.answer && "input-error"
               }`}
-              {...register("answer", { required: true, minLength: 3 })}
+              {...register("answer")}
             />
+            {errors.answer && (
+              <span className="italic">{errors.answer.message}</span>
+            )}
             <button className="btn btn-primary" onClick={handleQuestionAnser}>
               <span className="mr-2">Продовжити</span>{" "}
               <ChevronRightIcon width={20} />
@@ -82,7 +91,7 @@ function Quiz() {
           </form>
         </>
       ) : (
-        "loading"
+        <Loading />
       )}
     </div>
   );

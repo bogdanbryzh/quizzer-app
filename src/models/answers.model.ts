@@ -31,6 +31,15 @@ export const createAnswer = async ({
   team_id,
   text,
 }: InsertAnswerData) => {
+  const { data: maybeAnsweredQuestion } = await supabase
+    .from<Answer>("answers")
+    .select("*")
+    .eq("question_id", question_id)
+    .eq("team_id", team_id)
+    .single();
+
+  if (maybeAnsweredQuestion) return null;
+
   const { data, error } = await supabase
     .from<Answer>("answers")
     .insert([{ question_id, team_id, text }])

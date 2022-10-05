@@ -1,5 +1,5 @@
-import { atomWithStorage } from "jotai/utils";
+import { atom } from "jotai";
 
 type Stage = "intro" | "picker" | "quiz" | "outro";
 
-export const stageAtom = atomWithStorage<Stage>("stage", "intro");
+export const stageAtom = atom<Stage>("intro");

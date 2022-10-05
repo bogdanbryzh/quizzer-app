@@ -1,13 +1,15 @@
 import { useAtom } from "jotai";
-import { teamAtom } from "../store/team";
+import { teamIsFinishedAlready } from "../store/team";
 
 function Outro() {
-  const [team] = useAtom(teamAtom);
+  const [teamAlreadyFinished] = useAtom(teamIsFinishedAlready);
 
   return (
     <>
-      <h1 className="text-4xl font-bold text-center">Good luck</h1>
-      {team?.finished ? <p className="text-center text-lg">Гарна спроба :)</p> : null}
+      <h1 className="text-6xl font-bold text-center">Удачі!</h1>
+      {teamAlreadyFinished && (
+        <p className="text-center text-xl py-6">Гарна спроба, guys 🤭</p>
+      )}
     </>
   );
 }
