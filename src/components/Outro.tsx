@@ -6,7 +6,7 @@ function Outro() {
 
   return (
     <>
-      <h1 className="text-6xl font-bold text-center">Удачі!</h1>
+      <h1 className="text-5xl font-bold text-center">Благословінь!</h1>
       {teamAlreadyFinished && (
         <p className="text-center text-xl py-6">Гарна спроба, guys 🤭</p>
       )}
