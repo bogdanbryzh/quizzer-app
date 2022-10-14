@@ -25,6 +25,10 @@ function Quiz() {
 
   useEffect(() => {
     setTimer(timeLeft);
+    if (timeLeft <= 0) {
+      setStage("outro");
+      if (team && !team.finished) markTeamFinished(team!.id);
+    }
   }, [timeLeft]);
 
   useEffect(() => {
